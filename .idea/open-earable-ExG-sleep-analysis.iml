@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="PYTHON_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/recordings/open-earable-ExG/AppVersion4_BLE/P001/241201" />
+      <excludeFolder url="file://$MODULE_DIR$/recordings" />
+    </content>
+    <orderEntry type="jdk" jdkName="Python 3.10 (MLBasics_20220505)" jdkType="Python SDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
