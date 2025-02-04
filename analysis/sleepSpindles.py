@@ -8,7 +8,6 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Load the data
 folder_path = r'C:\Users\Jonas\OneDrive\Bachelorarbeit\open-earable-ExG-sleep-analysis\recordings\open-earable-ExG\AppVersion4_BLE\P011\250111\rawData'
 filtered_file_path = folder_path + '/eeg_with_sleep_stages.csv'
 df = pd.read_csv(filtered_file_path)
@@ -35,24 +34,19 @@ sleep_stages_int = sleep_stages_int[valid_idx]
 # Detect sleep spindles
 sp = yasa.spindles_detect(eeg_data, sf=sf, hypno=sleep_stages_int, include=(1, 2, 3))
 
-# Get spindle properties
 spindle_df = sp.summary()
 
-# Create directory for spindle figures
 output_dir = os.path.join(folder_path, 'spindle_figures')
 os.makedirs(output_dir, exist_ok=True)
 
-# Loop through each spindle and save the figure
 padding = int(5 * sf)  # 5 seconds before and after in samples
 for i, spindle in spindle_df.iterrows():
     start_idx = int(spindle['Start'] * sf)  # Convert start time to index
     end_idx = int(spindle['End'] * sf)  # Convert end time to index
 
-    # Define a window around the spindle
     window_start = max(0, start_idx - padding)
     window_end = min(len(eeg_data), end_idx + padding)
 
-    # Extract the data and mask for the window
     signal_window = eeg_data[window_start:window_end]
     mask_window = sp.get_mask()[window_start:window_end]
 
@@ -60,10 +54,8 @@ for i, spindle in spindle_df.iterrows():
     spindles_highlight = signal_window * mask_window
     spindles_highlight[spindles_highlight == 0] = np.nan  # Replace non-spindle samples with NaN
 
-    # Create time vector for the window
     time_window = np.arange(len(signal_window)) / sf  # Reset the time vector to start at 0
 
-    # Plot the windowed signal and highlight all spindles
     plt.figure(figsize=(14, 4))
     plt.plot(time_window, signal_window, 'k', label="EEG Signal")  # Original signal in black
     plt.plot(time_window, spindles_highlight, 'indianred', label="Spindles")  # Highlighted spindles in red
@@ -75,7 +67,6 @@ for i, spindle in spindle_df.iterrows():
     plt.legend()
     sns.despine()
 
-    # Save the figure
     file_name = os.path.join(output_dir, f'spindle_{i + 1}.png')
     plt.savefig(file_name, dpi=300, bbox_inches='tight')
     plt.close()

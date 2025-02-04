@@ -51,7 +51,7 @@ for participant in participants:
     model = RandomForestClassifier(
         n_estimators=100,
         random_state=42,
-        class_weight="balanced"   # Helps with class imbalance
+        class_weight="balanced"
     )
     model.fit(X_train_resampled, y_train_resampled)
 

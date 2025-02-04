@@ -1,14 +1,14 @@
 import os
 import pandas as pd
-import numpy as np
 
-# User-configurable parameters
+# This script creates feature vectors centered around one epoch for all epochs
+
+# parameters
 FEATURE_CSV_FOLDER = "../ml/features_V3"
 WINDOW_BEFORE = 2
 WINDOW_AFTER = 2
 OUTPUT_FILE = "../ml/features_combined_V3.csv"
 
-# Load and combine feature CSVs
 all_feature_csvs = [
     os.path.join(FEATURE_CSV_FOLDER, file)
     for file in os.listdir(FEATURE_CSV_FOLDER)
@@ -25,7 +25,6 @@ print(class_distribution)
 feature_columns = [col for col in combined_df.columns if
                    col not in ["sleep_stage_label", "epoch", "participant_id", "date"]]
 
-# Prepare lists to store all windowed results
 all_X_windowed = []
 all_y_windowed = []
 all_participant_ids = []
@@ -41,7 +40,6 @@ for (pid, d), group_df in grouped:
     y = group_df["sleep_stage_label"].values
     epochs = group_df["epoch"].values
 
-    # Create windowed features for this recording
     window_size = WINDOW_BEFORE + 1 + WINDOW_AFTER
 
     for i in range(WINDOW_BEFORE, len(X) - WINDOW_AFTER):
@@ -55,7 +53,6 @@ for (pid, d), group_df in grouped:
             all_dates.append(d)
             all_center_epochs.append(epochs[i])
 
-# Build the column names for the windowed features
 windowed_feature_names = []
 for offset in range(-WINDOW_BEFORE, WINDOW_AFTER + 1):
     for fc in feature_columns:
@@ -67,6 +64,5 @@ windowed_df["participant_id"] = all_participant_ids
 windowed_df["date"] = all_dates
 windowed_df["epoch"] = all_center_epochs
 
-# Save the final windowed DataFrame
 windowed_df.to_csv(OUTPUT_FILE, index=False)
 print(f"Windowed data saved to {OUTPUT_FILE}")

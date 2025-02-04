@@ -9,23 +9,18 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, cohen_kappa_score
 
-# Load data
 WINDOWED_DATA_FILE = "features_combined_V3.csv"
 windowed_df = pd.read_csv(WINDOWED_DATA_FILE)
 
-# Define non-feature columns
 non_feature_cols = ["sleep_stage_label", "participant_id", "date", "epoch"]
 feature_columns = [col for col in windowed_df.columns if col not in non_feature_cols]
 
-# Features and labels
 X = windowed_df[feature_columns].values
 y = windowed_df["sleep_stage_label"].values
 
-# Encode labels
 label_encoder = LabelEncoder()
 y_encoded = label_encoder.fit_transform(y)
 
-# Standardize features
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
@@ -59,7 +54,7 @@ for train_index, test_index in kf.split(X_scaled, y_encoded):
     cm = confusion_matrix(y_test, y_pred, labels=range(len(label_encoder.classes_)))
     conf_matrices.append(cm)
 
-    # Calculate sensitivity and specificity per class
+    # sensitivity and specificity per classl
     for i, class_name in enumerate(label_encoder.classes_):
         TP = cm[i, i]
         FP = cm[:, i].sum() - TP
@@ -72,7 +67,6 @@ for train_index, test_index in kf.split(X_scaled, y_encoded):
         class_specific_sensitivity[class_name].append(sensitivity)
         class_specific_specificity[class_name].append(specificity)
 
-# Compute and display averages
 mean_accuracy = np.mean(accuracy_scores)
 std_accuracy = np.std(accuracy_scores)
 mean_kappa = np.mean(kappa_scores)
@@ -99,7 +93,6 @@ print("\nAverage Specificity per Class:")
 for class_name, avg_specificity in avg_class_specificity.items():
     print(f"{class_name}: {avg_specificity:.3f}")
 
-# Plot normalized confusion matrix
 plt.figure(figsize=(10, 8))
 sns.heatmap(avg_conf_mat_normalized, annot=True, fmt='.2f', cmap='Blues',  cbar=True, square=True, vmin=0, vmax=0.9,
             xticklabels=label_encoder.classes_, yticklabels=label_encoder.classes_, annot_kws={"size": 16})

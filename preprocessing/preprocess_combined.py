@@ -1,25 +1,23 @@
 import os
 import pandas as pd
-import numpy as np
 import struct
 from datetime import datetime, timedelta
 import scipy.signal
 import xml.etree.ElementTree as ET
 
-# Define paths and parameters
+# This script implements the preprocessing pipeline
+# paths and parameters
 folder_path = r'C:\Users\Jonas\OneDrive\Bachelorarbeit\open-earable-ExG-sleep-analysis\recordings\open-earable-ExG\AppVersion4_BLE\P009\250118\rawData'
 final_output_path = os.path.join(folder_path, 'eeg_with_sleep_stages.csv')
 xml_file_path = r'C:\Users\Jonas\OneDrive\Bachelorarbeit\open-earable-ExG-sleep-analysis\recordings\open-earable-ExG\AppVersion4_BLE\P009\250118\appleHealth\Export\apple_health_export\Export.xml'
 
-# Parameters
-start_time_of_recording = "04:43:52.000000"
+start_time_of_recording = "04:43:52.000000" #extract from name of first recorded csv filer
 night_start = pd.to_datetime('2025-01-18 21:00:00')
 night_end = pd.to_datetime('2025-01-19 12:00:00')
 sample_rate = 241
 inamp_gain = 50
 
-# Create filters
-sos_bandpass = scipy.signal.iirfilter(4, Wn=[0.5, 32], fs=sample_rate, btype="bandpass", ftype="butter", output="sos")
+sos_bandpass = scipy.signal.iirfilter(4, Wn=[0.5, 30], fs=sample_rate, btype="bandpass", ftype="butter", output="sos")
 
 # Step 1: Combine CSV files
 header = ["time", "rawData1", "rawData2", "rawData3", "rawData4"]
@@ -40,11 +38,9 @@ unpacked_data = []
 for _, row in df.iterrows():
     time_str = row['time']
 
-    # Try parsing with microseconds first
     try:
         timestamp = datetime.strptime(time_str, '%H:%M:%S.%f')
     except ValueError:
-        # If that fails, try without microseconds
         timestamp = datetime.strptime(time_str, '%H:%M:%S')
 
     data = struct.pack('<4f', row['rawData1'], row['rawData2'], row['rawData3'], row['rawData4'])
@@ -116,7 +112,7 @@ sleep_df['value'] = sleep_df['value'].map(stage_mapping)
 sleep_df['startTime'] = sleep_df['startDate'].dt.time
 sleep_df['endTime'] = sleep_df['endDate'].dt.time
 
-# Integrate sleep stages into df
+# integrate sleep stages into df
 for _, row in sleep_df.iterrows():
     mask = (df['time'] >= row['startTime']) & (df['time'] < row['endTime'])
     df.loc[mask, 'sleep_stage'] = row['value']

@@ -1,10 +1,12 @@
 import os
 import pandas as pd
 import numpy as np
-from scipy.signal import welch, find_peaks, iirfilter, sosfiltfilt, cwt, morlet
+from scipy.signal import welch, cwt, morlet
 from scipy.stats import entropy
-from datetime import datetime
 import zlib
+
+# features based on proposal by https://link.springer.com/article/10.1186/s12938-017-0400-5
+# we omit features inlcuding the gamma band, because of powerline interference
 
 participant_id = "P008"
 recording_date = "241228"
@@ -20,7 +22,6 @@ BANDS = {
 }
 
 # Time-domain features
-
 def zero_crossing_rate(data):
     return ((data[:-1] * data[1:]) < 0).sum() / len(data)
 
@@ -38,7 +39,6 @@ def hjorth_complexity(data):
     return mobility_diff1 / mobility
 
 # Frequency-domain features
-
 def compute_relative_band_powers(data, sf, bands):
     freqs, psd = welch(data, sf, nperseg=len(data))
     total_power = np.sum(psd[(freqs >= 0.5) & (freqs <= 32)])
@@ -71,20 +71,17 @@ def compute_cwt_features(data, scales, wavelet):
         features[f"cwt_{band}_entropy"] = entropy(np.abs(coeffs))
         features[f"cwt_{band}_percentile_75"] = np.percentile(np.abs(coeffs), 75)
 
-    # Duration of activation (F59–F63)
     threshold = 1.5 * np.median(np.abs(cwt_matrix))
     for i, band in enumerate(BANDS.keys()):
         coeffs = np.abs(cwt_matrix[i, :])
         duration = np.sum(coeffs > threshold) / len(coeffs)
         features[f"cwt_{band}_activation_duration"] = duration
 
-    # Relative power features (F69–F73) based on mean power till 32 Hz
     total_power = np.sum(np.abs(cwt_matrix))
     for i, band in enumerate(BANDS.keys()):
         coeffs = cwt_matrix[i, :]
         features[f"cwt_{band}_relative_power"] = np.sum(np.abs(coeffs)) / total_power
 
-    # Power ratios (F74–F77)
     features["cwt_delta_theta_ratio"] = features["cwt_delta_relative_power"] / features["cwt_theta_relative_power"]
     features["cwt_theta_alpha_ratio"] = features["cwt_theta_relative_power"] / features["cwt_alpha_relative_power"]
     features["cwt_alpha_beta_ratio"] = features["cwt_alpha_relative_power"] / features["cwt_beta_relative_power"]
@@ -94,7 +91,6 @@ def compute_cwt_features(data, scales, wavelet):
 def compute_spectral_metrics(data, sf):
     freqs, psd = welch(data, sf, nperseg=len(data))
 
-    # Restrict to 0.5–32 Hz range
     valid_range = (freqs >= 0.5) & (freqs <= 32)
     psd = psd[valid_range]
     freqs = freqs[valid_range]
@@ -102,10 +98,9 @@ def compute_spectral_metrics(data, sf):
     cumulative_power = np.cumsum(psd)
     total_power = cumulative_power[-1]
 
-    # Spectral Edge Frequency (95%)
     edge_freq = freqs[np.where(cumulative_power >= 0.95 * total_power)[0][0]]
 
-    # Median Frequency (50%)
+    # Median Frequency
     median_freq = freqs[np.where(cumulative_power >= 0.5 * total_power)[0][0]]
 
     # Mean Frequency Difference
